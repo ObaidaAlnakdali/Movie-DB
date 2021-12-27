@@ -1,6 +1,5 @@
 const express = require('express')
 const app = express()
-
 const movies = [
     { title: 'Jaws', year: 1975, rating: 8 },
     { title: 'Avatar', year: 2009, rating: 7.8 },
@@ -31,9 +30,9 @@ app.get('/hello/:id', function (req, res) {
 })
 
 app.get('/search', function (req, res) {
-    if(req.query.s=="" || req.query.s == undefined){
+    if (req.query.s == "" || req.query.s == undefined) {
         res.status(500).send(`{status:500, error:true, message:"you have to provide a search"}`);
-    }else{
+    } else {
         res.status(200).send(`{status:200, message:"ok", data: ${req.query.s}}`);
     }
 })
@@ -77,9 +76,9 @@ app.get('/movies/get/by-rating', function (req, res) {
         }
         return 0;
     }
-
     movieList.sort(compare);
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)})
+    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
+})
 
 app.get('/movies/get/by-title', function (req, res) {
     movieList = movies;
@@ -92,9 +91,17 @@ app.get('/movies/get/by-title', function (req, res) {
         }
         return 0;
     }
-
     movieList.sort(compare);
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)})
+    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
+})
+
+app.get('/movies/get/id/:id', function (req, res) {
+    if(req.params.id < 0 || req.params.id > movies.length -1){
+        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
+    } else {
+        res.status(200).send(`${JSON.stringify(movies[req.params.id])}`)
+    }
+})
 
 app.get('/movies/edit', function (req, res) {
     res.status(200).send(`Ok`)
@@ -103,6 +110,5 @@ app.get('/movies/edit', function (req, res) {
 app.get('/movies/delete', function (req, res) {
     res.status(200).send(`Ok`)
 })
-
 
 app.listen(3000)
