@@ -50,6 +50,52 @@ app.get('/movies/get', function (req, res) {
     res.status(200).send(`{status:200, data: ${JSON.stringify(movies)} }`)
 })
 
+app.get('/movies/get/by-date', function (req, res) {
+    movieList = movies;
+    function compare(a, b) {
+        if (a.year > b.year) {
+            return -1;
+        }
+        if (a.year < b.year) {
+            return 1;
+        }
+        return 0;
+    }
+
+    movieList.sort(compare);
+    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
+})
+
+app.get('/movies/get/by-rating', function (req, res) {
+    movieList = movies;
+    function compare(a, b) {
+        if (a.rating > b.rating) {
+            return -1;
+        }
+        if (a.rating < b.rating) {
+            return 1;
+        }
+        return 0;
+    }
+
+    movieList.sort(compare);
+    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)})
+
+app.get('/movies/get/by-title', function (req, res) {
+    movieList = movies;
+    function compare(a, b) {
+        if (a.title < b.title) {
+            return -1;
+        }
+        if (a.title > b.title) {
+            return 1;
+        }
+        return 0;
+    }
+
+    movieList.sort(compare);
+    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)})
+
 app.get('/movies/edit', function (req, res) {
     res.status(200).send(`Ok`)
 })
