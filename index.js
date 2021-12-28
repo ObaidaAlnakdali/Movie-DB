@@ -42,7 +42,13 @@ app.get('/search', function (req, res) {
 ////////////////////////////////////
 
 app.get('/movies/add', function (req, res) {
-    res.status(200).send(`Ok`)
+    if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
+        newMovie = { title: req.query.title, year: req.query.year, rating: req.query.rating == "" || req.query.rating == undefined ? 4 : req.query.rating }
+        movies.push(newMovie)
+        res.status(200).send(JSON.stringify(movies[movies.length - 1]))
+    } else {
+        res.status(404).send({ status: 403, error: true, message: 'you cannot create a movie without providing a title and a year' })
+    }
 })
 
 app.get('/movies/get', function (req, res) {
@@ -96,7 +102,7 @@ app.get('/movies/get/by-title', function (req, res) {
 })
 
 app.get('/movies/get/id/:id', function (req, res) {
-    if(req.params.id < 0 || req.params.id > movies.length -1){
+    if (req.params.id < 0 || req.params.id > movies.length - 1) {
         res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
     } else {
         res.status(200).send(`${JSON.stringify(movies[req.params.id])}`)
