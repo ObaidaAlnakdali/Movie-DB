@@ -109,16 +109,22 @@ app.get('/movies/get/id/:id', function (req, res) {
     }
 })
 
-app.get('/movies/edit', function (req, res) {
-    res.status(200).send(`Ok`)
+app.get('/movies/edit/:id', function (req, res) {
+    if (req.params.id < 0 || req.params.id > movies.length - 1) {
+        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
+    } else {
+        movies[req.params.id].tilte = req.query.title != undefined || req.query.title != "" ? req.query.title : movies[req.params.id].title
+        movies[req.params.id].year = req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year) ? req.query.year : movies[req.params.id].year
+        movies[req.params.id].rating = req.query.rating != "" && req.query.rating != undefined ? req.query.rating : movies[req.params.id].rating
+    res.status(200).send(`The movie has been modified as follows ${JSON.stringify(movies[req.params.id])}`)
+    }
 })
 
 app.get('/movies/delete/id/:id', function (req, res) {
     if (req.params.id < 0 || req.params.id > movies.length - 1) {
         res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
     } else {
-        res.status(200).send(`This movie (${JSON.stringify(movies[req.params.id])}) is deleted`)
-        movies.splice(req.params.id, 1)
+        res.status(200).send(`This movie (${JSON.stringify(movies.splice(req.params.id, 1))}) is deleted`)
     }})
 
 app.listen(3000)
