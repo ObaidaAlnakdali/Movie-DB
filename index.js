@@ -113,8 +113,12 @@ app.get('/movies/edit', function (req, res) {
     res.status(200).send(`Ok`)
 })
 
-app.get('/movies/delete', function (req, res) {
-    res.status(200).send(`Ok`)
-})
+app.get('/movies/delete/id/:id', function (req, res) {
+    if (req.params.id < 0 || req.params.id > movies.length - 1) {
+        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
+    } else {
+        res.status(200).send(`This movie (${JSON.stringify(movies[req.params.id])}) is deleted`)
+        movies.splice(req.params.id, 1)
+    }})
 
 app.listen(3000)
