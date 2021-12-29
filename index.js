@@ -1,5 +1,8 @@
 const express = require('express')
-const app = express()
+var app = express()
+var cors = require('cors')
+app.use(cors())
+
 const movies = [
     { title: 'Jaws', year: 1975, rating: 8 },
     { title: 'Avatar', year: 2009, rating: 7.8 },
@@ -24,8 +27,6 @@ app.get('/time', function (req, res) {
 })
 
 app.get('/hello/:id', function (req, res) {
-    //console.log("req",req);
-    //console.log("res",res);
     res.status(200).send(`Hello, ${req.params.id}`)
 })
 
@@ -41,7 +42,7 @@ app.get('/search', function (req, res) {
 /////////      CRUD     ////////////
 ////////////////////////////////////
 
-app.get('/movies/add', function (req, res) {
+app.post('/movies/add', function (req, res) {
     if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
         newMovie = { title: req.query.title, year: req.query.year, rating: req.query.rating == "" || req.query.rating == undefined ? 4 : req.query.rating }
         movies.push(newMovie)
@@ -109,21 +110,22 @@ app.get('/movies/get/id/:id', function (req, res) {
     }
 })
 
-app.get('/movies/edit/:id', function (req, res) {
+app.put('/movies/edit/:id', function (req, res) {
     if (req.params.id < 0 || req.params.id > movies.length - 1) {
         res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
     } else {
-        movies[req.params.id].tilte = req.query.title != undefined || req.query.title != "" ? req.query.title : movies[req.params.id].title
+        movies[req.params.id].title = req.query.title != undefined || req.query.title != "" ? req.query.title : movies[req.params.id].title
         movies[req.params.id].year = req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year) ? req.query.year : movies[req.params.id].year
         movies[req.params.id].rating = req.query.rating != "" && req.query.rating != undefined ? req.query.rating : movies[req.params.id].rating
-    res.status(200).send(`The movie has been modified as follows ${JSON.stringify(movies[req.params.id])}`)
+        res.status(200).send(`The movie has been modified as follows ${JSON.stringify(movies[req.params.id])}`)
     }
 })
 
-app.get('/movies/delete/id/:id', function (req, res) {
+app.delete('/movies/delete/id/:id', function (req, res) {
     if (req.params.id < 0 || req.params.id > movies.length - 1) {
         res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
     } else {
+        //movies.splice(req.params.id, 1)
         res.status(200).send(`This movie (${JSON.stringify(movies.splice(req.params.id, 1))}) is deleted`)
     }})
 
