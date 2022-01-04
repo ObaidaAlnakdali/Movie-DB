@@ -1,5 +1,5 @@
 const express = require('express')
-const MongoClient = require('mongodb').MongoClient
+const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 var cors = require('cors')
@@ -7,18 +7,12 @@ var app = express()
 app.use(cors())
 
 
+const url = "mongodb+srv://obaida:123abo123@cluster0.otnn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
 
-const url = `mongodb+srv://obaida:123abo123@cluster0.otnn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-
-try {
-    mongoose.connect(url);
-} catch (error) {
-    console.log(error)
-}
-
-
-const client = new MongoClient(url)
-
+mongoose.connection.once('open', function () {
+    console.log("connection is success")
+})
 
 const movies = [
     { title: 'Jaws', year: 1975, rating: 8 },
@@ -26,14 +20,6 @@ const movies = [
     { title: 'Brazil', year: 1985, rating: 8 },
     { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
 ]
-
-
-// mongoose.connection.once('open', function () {
-//     console.log("connection is success")
-// })
-
-// main().catch(console.error())
-
 
 app.get('/', function (req, res) {
     res.status(200).send(`Ok`)
