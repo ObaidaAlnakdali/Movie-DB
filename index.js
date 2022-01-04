@@ -1,7 +1,24 @@
 const express = require('express')
-var app = express()
+const MongoClient = require('mongodb').MongoClient
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 var cors = require('cors')
+var app = express()
 app.use(cors())
+
+
+
+const url = `mongodb+srv://obaida:123abo123@cluster0.otnn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+
+try {
+    mongoose.connect(url);
+} catch (error) {
+    console.log(error)
+}
+
+
+const client = new MongoClient(url)
+
 
 const movies = [
     { title: 'Jaws', year: 1975, rating: 8 },
@@ -9,6 +26,14 @@ const movies = [
     { title: 'Brazil', year: 1985, rating: 8 },
     { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
 ]
+
+
+// mongoose.connection.once('open', function () {
+//     console.log("connection is success")
+// })
+
+// main().catch(console.error())
+
 
 app.get('/', function (req, res) {
     res.status(200).send(`Ok`)
@@ -121,12 +146,12 @@ app.put('/movies/edit/:id', function (req, res) {
     }
 })
 
-app.delete('/movies/delete/id/:id', function (req, res) {
+app.delete('/movies/delete/:id', function (req, res) {
     if (req.params.id < 0 || req.params.id > movies.length - 1) {
         res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
     } else {
-        //movies.splice(req.params.id, 1)
         res.status(200).send(`This movie (${JSON.stringify(movies.splice(req.params.id, 1))}) is deleted`)
-    }})
+    }
+})
 
 app.listen(3000)
