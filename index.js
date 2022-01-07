@@ -2,24 +2,102 @@ const express = require('express')
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-var cors = require('cors')
+var cors = require('cors') 
 var app = express()
 app.use(cors())
 
-
 const url = "mongodb+srv://obaida:123abo123@cluster0.otnn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
-
-mongoose.connection.once('open', function () {
+mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
     console.log("connection is success")
+});
+
+// mongoose.connection.once('open', function () {
+//     console.log("connection is success")
+// })
+
+const movieSchema = new mongoose.Schema({
+    title: {type: String, default:""},
+    year: {type: Number, default:1900},
+    rating: {type: Number, default:4},
+  },{versionKey: false});
+
+const movies = mongoose.model("movies", movieSchema);
+
+////////////////////////////////////
+/////////      CRUD     ////////////
+////////////////////////////////////
+
+app.post('/movies/add', function (req, res) {
+    if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
+        newMovie = { title: req.query.title, year: req.query.year, rating: req.query.rating == "" || req.query.rating == undefined ? 4 : req.query.rating }
+        movies.create(newMovie).then(movie => res.status(200).json(movie))
+    } else {
+        res.status(404).send({ status: 403, error: true, message: 'you cannot create a movie without providing a title and a year' })
+    }
 })
 
-const movies = [
-    { title: 'Jaws', year: 1975, rating: 8 },
-    { title: 'Avatar', year: 2009, rating: 7.8 },
-    { title: 'Brazil', year: 1985, rating: 8 },
-    { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
-]
+app.get('/movies/get', function (req, res) {
+    movies.find().then(movie => res.status(200).json(movie))
+})
+
+app.get('/movies/get/by-date', function (req, res) {
+    function compare(a, b) {
+        if (a.year > b.year) {
+            return -1;
+        }else if (a.year < b.year) {
+            return 1;
+        }
+        return 0;
+    }
+    movies.find().then(movie => res.status(200).json(movie.sort(compare)));
+})
+
+app.get('/movies/get/by-rating', function (req, res) {
+    movieList = movies;
+    function compare(a, b) {
+        if (a.rating > b.rating) {
+            return -1;
+        } else if (a.rating < b.rating) {
+            return 1;
+        }
+        return 0;
+    }
+    movies.find().then(movie => res.status(200).json(movie.sort(compare)));
+})
+
+app.get('/movies/get/by-title', function (req, res) {
+    movieList = movies;
+    function compare(a, b) {
+        if (a.title < b.title) {
+            return -1;
+        } else if (a.title > b.title) {
+            return 1;
+        }
+        return 0;
+    }
+    movies.find().then(movie => res.status(200).json(movie.sort(compare)));
+})
+
+app.get('/movies/get/id/:id', function (req, res) {
+    movies.findById(req.params.id).then(movie => res.status(200).json(movie))
+    .catch(error => res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`))
+})
+
+app.put('/movies/edit/:id', function (req, res) {
+    movies.findById(req.params.id).then(movie => {
+        movie.title = req.query.title != undefined || req.query.title != "" ? req.query.title : movie.title
+        movie.year = req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year) ? req.query.year : movie.year
+        movie.rating = req.query.rating != "" && req.query.rating != undefined ? req.query.rating : movie.rating
+        movie.save();
+        res.status(200).json(movie)
+    }).catch(error => res.status(404).send(error))
+})
+
+app.delete('/movies/delete/:id', function (req, res) {
+    movies.findOneAndDelete({ _id : req.params.id})
+    .then(movie => res.status(200).json(movie + "the movie is deleted"))
+    .catch(error => res.status(404).send(`the id is not correct`))
+})
 
 app.get('/', function (req, res) {
     res.status(200).send(`Ok`)
@@ -49,95 +127,6 @@ app.get('/search', function (req, res) {
     }
 })
 
-////////////////////////////////////
-/////////      CRUD     ////////////
-////////////////////////////////////
 
-app.post('/movies/add', function (req, res) {
-    if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
-        newMovie = { title: req.query.title, year: req.query.year, rating: req.query.rating == "" || req.query.rating == undefined ? 4 : req.query.rating }
-        movies.push(newMovie)
-        res.status(200).send(JSON.stringify(movies[movies.length - 1]))
-    } else {
-        res.status(404).send({ status: 403, error: true, message: 'you cannot create a movie without providing a title and a year' })
-    }
-})
-
-app.get('/movies/get', function (req, res) {
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movies)} }`)
-})
-
-app.get('/movies/get/by-date', function (req, res) {
-    movieList = movies;
-    function compare(a, b) {
-        if (a.year > b.year) {
-            return -1;
-        }
-        if (a.year < b.year) {
-            return 1;
-        }
-        return 0;
-    }
-
-    movieList.sort(compare);
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
-})
-
-app.get('/movies/get/by-rating', function (req, res) {
-    movieList = movies;
-    function compare(a, b) {
-        if (a.rating > b.rating) {
-            return -1;
-        }
-        if (a.rating < b.rating) {
-            return 1;
-        }
-        return 0;
-    }
-    movieList.sort(compare);
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
-})
-
-app.get('/movies/get/by-title', function (req, res) {
-    movieList = movies;
-    function compare(a, b) {
-        if (a.title < b.title) {
-            return -1;
-        }
-        if (a.title > b.title) {
-            return 1;
-        }
-        return 0;
-    }
-    movieList.sort(compare);
-    res.status(200).send(`{status:200, data: ${JSON.stringify(movieList)} }`)
-})
-
-app.get('/movies/get/id/:id', function (req, res) {
-    if (req.params.id < 0 || req.params.id > movies.length - 1) {
-        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
-    } else {
-        res.status(200).send(`${JSON.stringify(movies[req.params.id])}`)
-    }
-})
-
-app.put('/movies/edit/:id', function (req, res) {
-    if (req.params.id < 0 || req.params.id > movies.length - 1) {
-        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
-    } else {
-        movies[req.params.id].title = req.query.title != undefined || req.query.title != "" ? req.query.title : movies[req.params.id].title
-        movies[req.params.id].year = req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year) ? req.query.year : movies[req.params.id].year
-        movies[req.params.id].rating = req.query.rating != "" && req.query.rating != undefined ? req.query.rating : movies[req.params.id].rating
-        res.status(200).send(`The movie has been modified as follows ${JSON.stringify(movies[req.params.id])}`)
-    }
-})
-
-app.delete('/movies/delete/:id', function (req, res) {
-    if (req.params.id < 0 || req.params.id > movies.length - 1) {
-        res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`)
-    } else {
-        res.status(200).send(`This movie (${JSON.stringify(movies.splice(req.params.id, 1))}) is deleted`)
-    }
-})
 
 app.listen(3000)
