@@ -2,30 +2,33 @@ const express = require('express')
 const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-var cors = require('cors') 
+const dotenv = require('dotenv');
+var cors = require('cors')
 var app = express()
 app.use(cors())
+dotenv.config()
 
-const url = "mongodb+srv://obaida:123abo123@cluster0.otnn2.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
+//Import Routes
+const authRoute = require('./routes/auth');
+
+//Route Middlewares
+app.use('/api/user', authRoute)
+
+mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
     console.log("connection is success")
-});
-
-// mongoose.connection.once('open', function () {
-//     console.log("connection is success")
-// })
+}).catch(error => console.log(error));
 
 const movieSchema = new mongoose.Schema({
-    title: {type: String, default:""},
-    year: {type: Number, default:1900},
-    rating: {type: Number, default:4},
-  },{versionKey: false});
+    title: { type: String, default: "" },
+    year: { type: Number, default: 1900 },
+    rating: { type: Number, default: 4 },
+}, { versionKey: false });
 
 const movies = mongoose.model("movies", movieSchema);
 
-////////////////////////////////////
-/////////      CRUD     ////////////
-////////////////////////////////////
+//////////////////////////////////////
+//////////  CRUD   Movie  ////////////
+//////////////////////////////////////
 
 app.post('/movies/add', function (req, res) {
     if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
@@ -40,11 +43,16 @@ app.get('/movies/get', function (req, res) {
     movies.find().then(movie => res.status(200).json(movie))
 })
 
+app.get('/movies/get/id/:id', function (req, res) {
+    movies.findById(req.params.id).then(movie => res.status(200).json(movie))
+        .catch(error => res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`))
+})
+
 app.get('/movies/get/by-date', function (req, res) {
     function compare(a, b) {
         if (a.year > b.year) {
             return -1;
-        }else if (a.year < b.year) {
+        } else if (a.year < b.year) {
             return 1;
         }
         return 0;
@@ -78,11 +86,6 @@ app.get('/movies/get/by-title', function (req, res) {
     movies.find().then(movie => res.status(200).json(movie.sort(compare)));
 })
 
-app.get('/movies/get/id/:id', function (req, res) {
-    movies.findById(req.params.id).then(movie => res.status(200).json(movie))
-    .catch(error => res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`))
-})
-
 app.put('/movies/edit/:id', function (req, res) {
     movies.findById(req.params.id).then(movie => {
         movie.title = req.query.title != undefined || req.query.title != "" ? req.query.title : movie.title
@@ -94,9 +97,9 @@ app.put('/movies/edit/:id', function (req, res) {
 })
 
 app.delete('/movies/delete/:id', function (req, res) {
-    movies.findOneAndDelete({ _id : req.params.id})
-    .then(movie => res.status(200).json(movie + "the movie is deleted"))
-    .catch(error => res.status(404).send(`the id is not correct`))
+    movies.findOneAndDelete({ _id: req.params.id })
+        .then(movie => res.status(200).json(movie + "the movie is deleted"))
+        .catch(error => res.status(404).send(`the id is not correct`))
 })
 
 app.get('/', function (req, res) {
@@ -126,7 +129,5 @@ app.get('/search', function (req, res) {
         res.status(200).send(`{status:200, message:"ok", data: ${req.query.s}}`);
     }
 })
-
-
 
 app.listen(3000)
