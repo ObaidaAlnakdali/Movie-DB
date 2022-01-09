@@ -1,6 +1,6 @@
 const express = require('express')
-const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser');
+const verify = require('./routes/verifyToken');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 var cors = require('cors')
@@ -12,6 +12,7 @@ dotenv.config()
 const authRoute = require('./routes/auth');
 
 //Route Middlewares
+app.use(bodyParser.json())
 app.use('/api/user', authRoute)
 
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true }).then(() => {
@@ -30,7 +31,7 @@ const movies = mongoose.model("movies", movieSchema);
 //////////  CRUD   Movie  ////////////
 //////////////////////////////////////
 
-app.post('/movies/add', function (req, res) {
+app.post('/movies/add', verify, function (req, res) {
     if (req.query.title != "" && req.query.title != undefined && req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year)) {
         newMovie = { title: req.query.title, year: req.query.year, rating: req.query.rating == "" || req.query.rating == undefined ? 4 : req.query.rating }
         movies.create(newMovie).then(movie => res.status(200).json(movie))
@@ -39,16 +40,16 @@ app.post('/movies/add', function (req, res) {
     }
 })
 
-app.get('/movies/get', function (req, res) {
+app.get('/movies/get', verify, function (req, res) {
     movies.find().then(movie => res.status(200).json(movie))
 })
 
-app.get('/movies/get/id/:id', function (req, res) {
+app.get('/movies/get/id/:id', verify, function (req, res) {
     movies.findById(req.params.id).then(movie => res.status(200).json(movie))
         .catch(error => res.status(404).send(`{status:404, error:true, message:'the movie ${req.params.id} does not exist'}`))
 })
 
-app.get('/movies/get/by-date', function (req, res) {
+app.get('/movies/get/by-date', verify, function (req, res) {
     function compare(a, b) {
         if (a.year > b.year) {
             return -1;
@@ -60,7 +61,7 @@ app.get('/movies/get/by-date', function (req, res) {
     movies.find().then(movie => res.status(200).json(movie.sort(compare)));
 })
 
-app.get('/movies/get/by-rating', function (req, res) {
+app.get('/movies/get/by-rating', verify, function (req, res) {
     movieList = movies;
     function compare(a, b) {
         if (a.rating > b.rating) {
@@ -73,7 +74,7 @@ app.get('/movies/get/by-rating', function (req, res) {
     movies.find().then(movie => res.status(200).json(movie.sort(compare)));
 })
 
-app.get('/movies/get/by-title', function (req, res) {
+app.get('/movies/get/by-title', verify, function (req, res) {
     movieList = movies;
     function compare(a, b) {
         if (a.title < b.title) {
@@ -86,7 +87,7 @@ app.get('/movies/get/by-title', function (req, res) {
     movies.find().then(movie => res.status(200).json(movie.sort(compare)));
 })
 
-app.put('/movies/edit/:id', function (req, res) {
+app.put('/movies/edit/:id', verify, function (req, res) {
     movies.findById(req.params.id).then(movie => {
         movie.title = req.query.title != undefined || req.query.title != "" ? req.query.title : movie.title
         movie.year = req.query.year != 0 && req.query.year != undefined && req.query.year.length == 4 && !isNaN(req.query.year) ? req.query.year : movie.year
@@ -96,7 +97,7 @@ app.put('/movies/edit/:id', function (req, res) {
     }).catch(error => res.status(404).send(error))
 })
 
-app.delete('/movies/delete/:id', function (req, res) {
+app.delete('/movies/delete/:id', verify, function (req, res) {
     movies.findOneAndDelete({ _id: req.params.id })
         .then(movie => res.status(200).json(movie + "the movie is deleted"))
         .catch(error => res.status(404).send(`the id is not correct`))
